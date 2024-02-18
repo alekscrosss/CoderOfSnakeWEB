@@ -48,4 +48,4 @@ class Photo(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     # Зв'язок з користувачем
-    user = relationship("User", back_populates="photos")
+    user = relationship("User", backref="photos") #18/02/2024 Olha fix create user

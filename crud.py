@@ -35,6 +35,10 @@ def verify_password(plain_password, hashed_password):
     # Проверка на правильность пароля
     return pwd_context.verify(plain_password, hashed_password)
 
+#18/02/2024 Olha try 3 
+def get_user_by_email(email: str, db: Session):
+    return db.query(models.User).filter_by(email=email).first()
+
 
 # Iuliia 18.02.24
 def create_photo(db: Session, filename: str):

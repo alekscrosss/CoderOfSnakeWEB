@@ -3,9 +3,9 @@ from routers import user, photo, auth
 
 app = FastAPI()
 
-app.include_router(user.router)
+#app.include_router(user.router)
 app.include_router(photo.router)
-app.include_router(auth.router) #18/02/2024 Olha
+app.include_router(auth.router, prefix='/api') #18/02/2024 Olha
 
 
 # Додавання обробника для кореневого URL

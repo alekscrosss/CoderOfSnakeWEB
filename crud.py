@@ -16,14 +16,15 @@ def get_user_by_username(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
 
 
-def create_user(db: Session, user: schemas.UserCreate):
-    # Создаем пользователя, хешируем пароль, сохраняем в базу
-    hashed_password = pwd_context.hash(user.password)
-    db_user = models.User(username=user.username, email=user.email, password=hashed_password) #18/02/2024 Olha fix create user
-    db.add(db_user)
+async def create_user(body: schemas.UserModel, db: Session): #19/02/2024
+    new_user = models.User(
+        username=body.username,
+        password=body.password,
+        email=body.email)
+    db.add(new_user)
     db.commit()
-    db.refresh(db_user)
-    return db_user
+    db.refresh(new_user)
+    return new_user
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
@@ -36,8 +37,8 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 #18/02/2024 Olha try 3 
-def get_user_by_email(email: str, db: Session):
-    return db.query(models.User).filter_by(email=email).first()
+async def get_user_by_email(email: str, db: Session) -> models.User | None: #19/02/2024 fix    
+    return db.query(models.User).filter(models.User.email == email).first() #19/02/2024 fix
 
 
 # Iuliia 18.02.24

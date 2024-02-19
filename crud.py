@@ -16,14 +16,27 @@ def get_user_by_username(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
 
 
-def create_user(db: Session, user: schemas.UserCreate):
+async def create_user(body: schemas.UserModel, db: Session): #19/02/2024
     # Создаем пользователя, хешируем пароль, сохраняем в базу
-    hashed_password = pwd_context.hash(user.password)
-    db_user = models.User(username=user.username, hashed_password=hashed_password)
-    db.add(db_user)
+    verification_users_count = db.query(models.User).count()
+
+    if verification_users_count == 0:
+        new_user = models.User(
+            username=body.username,
+            password=body.password,
+            email=body.email,
+            role=models.Role.admin  # Присваиваем роль 'admin'
+        )
+    else:
+        new_user = models.User(
+            username=body.username,
+            password=body.password,
+            email=body.email
+        )
+    db.add(new_user)
     db.commit()
-    db.refresh(db_user)
-    return db_user
+    db.refresh(new_user)
+    return new_user
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):

@@ -2,9 +2,9 @@ import psycopg2
 from psycopg2 import extras
 
 # Параметри підключення до бази даних PostgreSQL
-dbname = 'cosweb'
+dbname = 'db2'
 user = 'postgres'
-password = '123456789'
+password = '123'
 host = 'localhost'  # або адреса вашого сервера PostgreSQL
 port = '5432'  # порт за замовчуванням для PostgreSQL
 

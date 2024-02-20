@@ -2,6 +2,7 @@
 .env
 .idea
 .venv
+versions
 =======
 # Byte-compiled / optimized / DLL files
 __pycache__/

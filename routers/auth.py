@@ -10,7 +10,7 @@ from schemas import UserModel, UserResponse, TokenModel, RequestEmail #check
 from scripts import users_auth
 from services.auth import auth_service
 from services.email import send_email
-from fastapi_limiter.depends import RateLimiter
+# from fastapi_limiter.depends import RateLimiter
 from conf import messages
 import crud
 router = APIRouter(prefix="/auth", tags=['auth'])

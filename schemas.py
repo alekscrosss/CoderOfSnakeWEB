@@ -9,10 +9,17 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+
 class UserModel(BaseModel): #18/02/2024 Olha try4
     username: str = Field(min_length=2, max_length=50)
     password: str = Field(min_length=6, max_length=50)
     email: EmailStr
+
+
+# 20.02.24
+class UserResponse(BaseModel):
+    username: str
+    email: str
 
 class User(UserBase):
     id: int

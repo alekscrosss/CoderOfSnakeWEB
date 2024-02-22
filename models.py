@@ -48,4 +48,19 @@ class Photo(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     # Зв'язок з користувачем
-    user = relationship("User", backref="photos") #18/02/2024 Olha fix create user
+    user = relationship("User", backref="photos")  # 18/02/2024 Olha fix create user
+
+
+class Comment(Base):
+    # Модель коментариев..
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True)
+    content = Column(String, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"))
+    photo_id = Column(Integer, ForeignKey("photos.id"))
+
+    user = relationship("User", backref="comments")
+    photo = relationship("Photo", backref="comments")

@@ -53,16 +53,31 @@ class Photo(Base):
     user = relationship("User", backref="photos") #18/02/2024 Olha fix create user
 
 
-# # Nazar 22.02.24
-# class Tag(Base):
-#     tablename = 'tags'
-#
-#     id = Column(Integer, primary_key=True, index=True)
-#     name = Column(String, unique=True, index=True)
-#
-#
-# image_tag_association = Table('image_tag_association', Base.metadata,
-#     Column('image_id', Integer, ForeignKey('images.id')),
-#     Column('tag_id', Integer, ForeignKey('tags.id'))
-# )
+ # Nazar 22.02.24
+ class Tag(Base):
+     tablename = 'tags'
+
+     id = Column(Integer, primary_key=True, index=True)
+     name = Column(String, unique=True, index=True)
+
+
+ image_tag_association = Table('image_tag_association', Base.metadata,
+     Column('image_id', Integer, ForeignKey('images.id')),
+     Column('tag_id', Integer, ForeignKey('tags.id'))
+ )
+
+
+class Comment(Base):
+    # Модель коментариев..
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True)
+    content = Column(String, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"))
+    photo_id = Column(Integer, ForeignKey("photos.id"))
+
+    user = relationship("User", backref="comments")
+    photo = relationship("Photo", backref="comments")
 

@@ -29,10 +29,22 @@ def get_user_by_username(db: Session, username: str):
 
 
 async def create_user(body: schemas.UserModel, db: Session): #19/02/2024
-    new_user = models.User(
-        username=body.username,
-        password=body.password,
-        email=body.email)
+    
+    verification_users_count = db.query(models.User).count() #21/02/2024 - Add role
+
+    if verification_users_count == 0:
+        new_user = models.User(
+            username=body.username,
+            password=body.password,
+            email=body.email,
+            role=models.Role.admin  # Присваиваем роль 'admin'
+        )
+    else:
+        new_user = models.User(
+            username=body.username,
+            password=body.password,
+            email=body.email
+        )    
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

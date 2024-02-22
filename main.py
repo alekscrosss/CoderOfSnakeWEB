@@ -45,4 +45,5 @@ def healthchecker(db: Session = Depends(get_db)):
 #app.include_router(user.router)
 app.include_router(photo.router, prefix='/api')
 app.include_router(auth.router, prefix='/api') #18/02/2024 Olha
+# app.include_router(tags.router, prefix='/api') #18/02/2024 Olha
 

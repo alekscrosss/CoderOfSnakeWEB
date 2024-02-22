@@ -1,32 +1,96 @@
 # routes/photo.py
-from fastapi import APIRouter, Depends, status, File, UploadFile
+import json
+from pathlib import Path
+from fastapi import Request, Path
+import os
+from fastapi import APIRouter, Depends, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
 import crud
-import schemas
-import database
+import models, schemas, database
+from models import Photo
+from fastapi import HTTPException
+
 
 router = APIRouter()
 
 
 # Iuliia 18.02.24 Завантаження світлини з описом (POST):
-@router.post("/photos/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з описом")
-def create_photo(photo_data: schemas.PhotoCreate, file: UploadFile = File(...), db: Session = Depends(database.get_db)):
-    return crud.create_photo(db=db, photo_data=photo_data, file=file)
 
+@router.post("/photos/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з описом")
+async def create_photo(user_id: int, description: str = Form(...), file: UploadFile = File(...), db: Session = Depends(database.get_db)):
+    # Перевіряємо, чи існує фото з такою самою назвою в базі даних
+    existing_photo = db.query(Photo).filter(Photo.filename == file.filename).first()
+    if existing_photo:
+        # Якщо фото вже є у базі даних, видаляємо його з файлової системи користувача
+        file_path = Path("uploads") / file.filename
+        if file_path.exists():
+            file_path.unlink()
+        return existing_photo  # Повертаємо існуючу фото з бази даних
+
+    # Якщо фото ще не було завантажено, зберігаємо його в базу даних і на файлову систему
+    file_data = file.file.read()
+    photo = Photo(filename=file.filename, description=description, user_id=user_id)
+    db.add(photo)
+    db.commit()
+    db.refresh(photo)
+
+    with open(f"uploads/{file.filename}", "wb") as f:
+        f.write(file_data)
+
+    return photo
 
 # Iuliia 18.02.24 Видалення світлини (DELETE):
 @router.delete("/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT, description="Видалення світлини")
-def delete_photo(photo_id: int, db: Session = Depends(database.get_db)):
-    return crud.delete_photo(db=db, photo_id=photo_id)
+async def delete_photo(photo_id: int, db: Session = Depends(database.get_db)):
+
+    # Отримання фотографії з бази даних
+    photo = db.query(models.Photo).filter(models.Photo.id == photo_id).first()
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+     # Видалення файлу з файлової системи
+    file_path = os.path.join("uploads", photo.filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    # Видалення фотографії з бази даних
+    db.delete(photo)
+    db.commit()
+
+    return status.HTTP_204_NO_CONTENT
+
 
 
 # Iuliia 18.02.24 Редагування опису світлини (PUT):
-@router.put("/photos/{photo_id}", status_code=status.HTTP_200_OK, description="Редагування опису світлини")
+@router.put("/photos/{photo_id}", response_model=schemas.Photo, status_code=status.HTTP_200_OK, description="Редагування опису світлини")
 def update_photo(photo_id: int, photo_data: schemas.PhotoUpdate, db: Session = Depends(database.get_db)):
-    return crud.update_photo(db=db, photo_id=photo_id, photo_data=photo_data)
+    # Отримуємо фото з бази даних за його ідентифікатором
+    photo = crud.get_photo(db, photo_id=photo_id)
+    if photo is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
+
+    # Оновлюємо дані фото
+    for attr, value in photo_data.dict().items():
+        setattr(photo, attr, value)
+    db.commit()
+    db.refresh(photo)
+    return photo
 
 
 # Iuliia 18.02.24 Отримання світлини за унікальним посиланням (GET):
 @router.get("/photos/{photo_id}", status_code=status.HTTP_200_OK, description="Отримання світлини за унікальним посиланням")
 def get_photo(photo_id: int, db: Session = Depends(database.get_db)):
     return crud.get_photo(db=db, photo_id=photo_id)
+
+#
+# @app.post("/upload_image/")
+# def upload_image(image_data: dict, db: Session = Depends(get_db)):
+#     crud.upload_image(db, image_data)
+#     return {"message": "Image uploaded successfully"}
+#
+# @app.get("/get_image/{image_id}")
+# def get_image(image_id: int, db: Session = Depends(get_db)):
+#     image = crud.get_image(db, image_id)
+#     if image:
+#         return image
+#     raise HTTPException(status_code=404, detail="Image not found")

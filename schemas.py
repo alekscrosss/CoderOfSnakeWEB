@@ -1,3 +1,4 @@
+# schemas.py
 from pydantic import BaseModel, EmailStr, Field #18/02/2024 Olha try4
 from typing import Optional
 
@@ -43,22 +44,21 @@ class RequestEmail(BaseModel): #18/02/2024 Olha try4
 
 # Iuliia 18.02.24 -  Photo
 class PhotoBase(BaseModel):
+    filename: str
     description: str
 
 
 class PhotoCreate(PhotoBase):
-    id: int
-    filename: str
+    pass
 
 
-class PhotoUpdate(PhotoBase):
-    id: int
-    filename: str
+class PhotoUpdate(BaseModel):
+    description: Optional[str] = None
 
 
 class Photo(PhotoBase):
     id: int
-    filename: str
+
 
     class Config:
         orm_mode = True

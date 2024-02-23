@@ -1,13 +1,15 @@
+# file main.py
+
 import time
 from fastapi import Request
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from starlette.responses import HTMLResponse
-from database import get_db
+from src.db.database import get_db
 from fastapi.templating import Jinja2Templates
 
-from routers import user, photo, auth
+from src.routes import auth, photo, comments
 
 app = FastAPI()
 
@@ -21,7 +23,6 @@ async def custom_middleware(request: Request, call_next):
 
 
 templates = Jinja2Templates(directory='templates')
-
 
 # Додавання обробника для кореневого URL
 @app.get("/", response_class=HTMLResponse, description="Main page")
@@ -42,8 +43,8 @@ def healthchecker(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Error connecting to the database")
 
 
-#app.include_router(user.router)
+
 app.include_router(photo.router, prefix='/api')
-app.include_router(auth.router, prefix='/api') #18/02/2024 Olha
-# app.include_router(tags.router, prefix='/api') #18/02/2024 Olha
+app.include_router(auth.router, prefix='/api') 
+app.include_router(comments.router, prefix='/api')
 

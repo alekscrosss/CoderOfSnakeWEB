@@ -6,3 +6,4 @@ INVALID_SCOPE_FOR_TOKEN = 'Invalid scope for token'
 INVALID_TOKEN_FOR_EMAIL_VARIFICATION='Invalid token for email verification'
 INVALID_REFRESH_TOKEN = "Invalid refresh token"  # new
 VERIFICATION_ERROR = "Verification error"
+OPERATION_FORBIDDEN = "Operation forbidden" #23.02.2024 Olha

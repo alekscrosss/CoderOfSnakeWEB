@@ -54,17 +54,17 @@ class Photo(Base):
 
 
  # Nazar 22.02.24
- class Tag(Base):
-     tablename = 'tags'
-
-     id = Column(Integer, primary_key=True, index=True)
-     name = Column(String, unique=True, index=True)
-
-
- image_tag_association = Table('image_tag_association', Base.metadata,
-     Column('image_id', Integer, ForeignKey('images.id')),
-     Column('tag_id', Integer, ForeignKey('tags.id'))
- )
+ # class Tag(Base):
+ #     tablename = 'tags'
+ #
+ #     id = Column(Integer, primary_key=True, index=True)
+ #     name = Column(String, unique=True, index=True)
+ #
+ #
+ # image_tag_association = Table('image_tag_association', Base.metadata,
+ #     Column('image_id', Integer, ForeignKey('images.id')),
+ #     Column('tag_id', Integer, ForeignKey('tags.id'))
+ # )
 
 
 class Comment(Base):

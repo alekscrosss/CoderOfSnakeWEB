@@ -5,20 +5,33 @@ from fastapi import Request, Path
 import os
 from fastapi import APIRouter, Depends, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
-import crud
-import models, schemas, database
-from models import Photo
+from src.crud.photo import get_photo, update_photo
+from src.db import models, database
+from src.schemas import photo_schema
+from src.db.models import Photo, Role, User #23/02/24 Olha
 from fastapi import HTTPException
-
+from src.services import roles #23/02/24 Olha
+from src.services.auth import auth_service #23/02/24 Olha
 
 router = APIRouter()
 
+allowed_operation_get = roles.RoleAccess([Role.admin, Role.moderator, Role.user]) #23/02/24 Olha
+allowed_operation_create = roles.RoleAccess([Role.admin, Role.moderator, Role.user]) #23/02/24 Olha
+allowed_operation_update = roles.RoleAccess([Role.admin, Role.moderator]) #23/02/24 Olha
+allowed_operation_remove = roles.RoleAccess([Role.admin]) #23/02/24 Olha
 
 # Iuliia 18.02.24 Завантаження світлини з описом (POST):
 
+
 @router.post("/photos/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з описом")
-async def create_photo(user_id: int, description: str = Form(...), file: UploadFile = File(...), db: Session = Depends(database.get_db)):
+async def create_photo(user_id: int = Depends(auth_service.get_current_user), description: str = Form(...), file: UploadFile = File(...), 
+                       db: Session = Depends(database.get_db),
+                       ): #23/02/24 Olha
+    #                 _: roles.RoleAccess = Depends(allowed_operation_create)
     # Перевіряємо, чи існує фото з такою самою назвою в базі даних
+
+    user_id = user_id.id
+
     existing_photo = db.query(Photo).filter(Photo.filename == file.filename).first()
     if existing_photo:
         # Якщо фото вже є у базі даних, видаляємо його з файлової системи користувача
@@ -41,7 +54,8 @@ async def create_photo(user_id: int, description: str = Form(...), file: UploadF
 
 # Iuliia 18.02.24 Видалення світлини (DELETE):
 @router.delete("/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT, description="Видалення світлини")
-async def delete_photo(photo_id: int, db: Session = Depends(database.get_db)):
+async def delete_photo(photo_id: int, db: Session = Depends(database.get_db),
+                       user: User = Depends(auth_service.get_current_user)):
 
     # Отримання фотографії з бази даних
     photo = db.query(models.Photo).filter(models.Photo.id == photo_id).first()
@@ -62,25 +76,22 @@ async def delete_photo(photo_id: int, db: Session = Depends(database.get_db)):
 
 
 # Iuliia 18.02.24 Редагування опису світлини (PUT):
-@router.put("/photos/{photo_id}", response_model=schemas.Photo, status_code=status.HTTP_200_OK, description="Редагування опису світлини")
-def update_photo(photo_id: int, photo_data: schemas.PhotoUpdate, db: Session = Depends(database.get_db)):
-    # Отримуємо фото з бази даних за його ідентифікатором
-    photo = crud.get_photo(db, photo_id=photo_id)
-    if photo is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
-
-    # Оновлюємо дані фото
-    for attr, value in photo_data.dict().items():
-        setattr(photo, attr, value)
-    db.commit()
-    db.refresh(photo)
-    return photo
+@router.put("/photos/{photo_id}", response_model=photo_schema.Photo, 
+            status_code=status.HTTP_200_OK, description="Редагування опису світлини")
+def update_photo_handler(photo_id: int, photo_data: photo_schema.PhotoUpdate, db: Session = Depends(database.get_db),
+                 user: User = Depends(auth_service.get_current_user)):
+    new_updated_photo = update_photo(db, photo_id, photo_data)     
+    return new_updated_photo
 
 
 # Iuliia 18.02.24 Отримання світлини за унікальним посиланням (GET):
 @router.get("/photos/{photo_id}", status_code=status.HTTP_200_OK, description="Отримання світлини за унікальним посиланням")
-def get_photo(photo_id: int, db: Session = Depends(database.get_db)):
-    return crud.get_photo(db=db, photo_id=photo_id)
+def get_photo(photo_id: int, db: Session = Depends(database.get_db),
+              user: User = Depends(auth_service.get_current_user)):
+    photo = db.query(Photo).filter(Photo.id == photo_id).first()
+    if photo is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
+    return photo
 
 #
 # @app.post("/upload_image/")

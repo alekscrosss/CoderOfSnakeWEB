@@ -5,7 +5,7 @@ import os
 from sqlalchemy import engine_from_config, create_engine
 from sqlalchemy import pool
 from alembic import context
-from models import Base
+from src.db.models import Base
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -15,7 +15,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 
-sqlalchemy_url = "postgresql+psycopg2://postgres:123@localhost:5432/db2"
+sqlalchemy_url = "postgresql+psycopg2://postgres:567234@localhost:5432/db2"
 
 # URI: postgresql://username:password@domain:port/database
 

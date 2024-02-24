@@ -11,7 +11,7 @@ from datetime import datetime
 import enum #18/02/2024 Olha
 import os
 
-SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://postgres:123@localhost/db2"
+SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://postgres:567234@localhost/db2"
 Base = declarative_base()
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -53,18 +53,17 @@ class Photo(Base):
     user = relationship("User", backref="photos") #18/02/2024 Olha fix create user
 
 
- # Nazar 22.02.24
- # class Tag(Base):
- #     tablename = 'tags'
- #
- #     id = Column(Integer, primary_key=True, index=True)
- #     name = Column(String, unique=True, index=True)
- #
- #
- # image_tag_association = Table('image_tag_association', Base.metadata,
- #     Column('image_id', Integer, ForeignKey('images.id')),
- #     Column('tag_id', Integer, ForeignKey('tags.id'))
- # )
+# Nazar 22.02.24
+class Tag(Base):
+    __tablename__ = 'tags'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+
+    image_tag_association = Table('image_tag_association', Base.metadata,
+                                  Column('image_id', Integer, ForeignKey('photos.id')),
+                                  Column('tag_id', Integer, ForeignKey('tags.id')))
+
 
 
 class Comment(Base):
@@ -80,4 +79,3 @@ class Comment(Base):
 
     user = relationship("User", backref="comments")
     photo = relationship("Photo", backref="comments")
-

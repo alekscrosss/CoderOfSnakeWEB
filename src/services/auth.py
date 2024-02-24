@@ -1,32 +1,33 @@
+import pickle #cash
 from datetime import datetime, timedelta
 from typing import Optional
 
-import redis
-import pickle
+import redis #cash
 from fastapi import Depends, HTTPException, status
 from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer  # Bearer token
+from fastapi.security import OAuth2PasswordBearer  
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
-from conf import messages #18/02/2024 Olha try3
-from database import get_db
-import crud
+from src.db.database import get_db
+from src.crud import users as repository_users
 
 
 
 class Auth:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
     SECRET_KEY = "45t5g4564rggnmj"
     ALGORITHM = "HS256"
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-    r = redis.Redis(host='localhost', port='6379', db=0)  # ..
+    r = redis.Redis(host='localhost', port='6379', db=0) #cash
 
-    def verify_password(self, plain_password, hashed_password): 
+    def verify_password(self, plain_password, hashed_password):
         return self.pwd_context.verify(plain_password, hashed_password)
 
     def get_password_hash(self, password: str):
         return self.pwd_context.hash(password)
+
 
     async def create_access_token(self, data: dict, expires_delta: Optional[float] = None):
         to_encode = data.copy()
@@ -38,6 +39,8 @@ class Auth:
         encoded_access_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_access_token
 
+
+# define a function to generate a new refresh token
     async def create_refresh_token(self, data: dict, expires_delta: Optional[float] = None):
         to_encode = data.copy()
         if expires_delta:
@@ -48,10 +51,11 @@ class Auth:
         encoded_refresh_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_refresh_token
 
+
     async def get_current_user(self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=messages.COULD_NOT_VALIDATE_CREDATIALS,
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -65,22 +69,24 @@ class Auth:
             else:
                 raise credentials_exception
         except JWTError as e:
-            raise credentials_exception
+            raise credentials_exception       
 
-        # user = await repository_users.get_user_by_email(email, db)
+
         user = self.r.get(f"user:{email}")
         if user is None:
-            user = await crud.get_user_by_email(email, db)
+            user = await repository_users.get_user_by_email(email, db)
             if user is None:
                 raise credentials_exception
             self.r.set(f"user:{email}", pickle.dumps(user))
             self.r.expire(f"user:{email}", 900)
         else:
             user = pickle.loads(user)
-
+        
+        #cach end
         if user is None:
             raise credentials_exception
         return user
+
 
     async def decode_refresh_token(self, refresh_token: str):
         try:
@@ -88,16 +94,17 @@ class Auth:
             if payload['scope'] == 'refresh_token':
                 email = payload['sub']
                 return email
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.INVALID_SCOPE_FOR_TOKEN)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid scope for token')
         except JWTError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.COULD_NOT_VALIDATE_CREDATIALS)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate credentials')
 
     def create_email_token(self, data: dict):
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(days=3)
+        expire = datetime.utcnow() + timedelta(days=7)
         to_encode.update({"iat": datetime.utcnow(), "exp": expire, "scope": "email_token"})
         token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
-        return token
+        return token       
+    
 
     def get_email_from_token(self, token: str):
         try:
@@ -105,11 +112,11 @@ class Auth:
             if payload['scope'] == 'email_token':
                 email = payload['sub']
                 return email
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.INVALID_SCOPE_FOR_TOKEN)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid scope for token')
         except JWTError as e:
             print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail=messages.INVALID_TOKEN_FOR_EMAIL_VARIFICATION)
-
+                                detail="Invalid token for email verification")   
+    
 
 auth_service = Auth()

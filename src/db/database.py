@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-import models
+from src.db import models
 
 
 def get_db():

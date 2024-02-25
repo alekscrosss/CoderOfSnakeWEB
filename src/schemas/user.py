@@ -11,7 +11,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str    
-    roles: Role #24/02/20204 Olha
+    role: Role #24/02/20204 Olha
    
 
     class Config:

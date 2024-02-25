@@ -12,13 +12,15 @@ from src.db.models import Photo, Role, User #23/02/24 Olha
 from fastapi import HTTPException
 from src.services import roles #23/02/24 Olha
 from src.services.auth import auth_service #23/02/24 Olha
+from src.services.roles import RoleAccess #24/02/24 Olha
 
 router = APIRouter()
 
+#Згідно ТЗ користувачі і юзери можуть робити все зі світлинами
 allowed_operation_get = roles.RoleAccess([Role.admin, Role.moderator, Role.user]) #23/02/24 Olha
 allowed_operation_create = roles.RoleAccess([Role.admin, Role.moderator, Role.user]) #23/02/24 Olha
-allowed_operation_update = roles.RoleAccess([Role.admin, Role.moderator]) #23/02/24 Olha
-allowed_operation_remove = roles.RoleAccess([Role.admin]) #23/02/24 Olha
+allowed_operation_update = roles.RoleAccess([Role.admin, Role.moderator, Role.user]) #24/02/24 Olha
+allowed_operation_remove = roles.RoleAccess([Role.admin, Role.moderator, Role.user]) #24/02/24 Olha
 
 # Iuliia 18.02.24 Завантаження світлини з описом (POST):
 
@@ -26,8 +28,8 @@ allowed_operation_remove = roles.RoleAccess([Role.admin]) #23/02/24 Olha
 @router.post("/photos/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з описом")
 async def create_photo(user_id: int = Depends(auth_service.get_current_user), description: str = Form(...), file: UploadFile = File(...), 
                        db: Session = Depends(database.get_db),
-                       ): #23/02/24 Olha
-    #                 _: roles.RoleAccess = Depends(allowed_operation_create)
+                       _: RoleAccess = Depends(allowed_operation_create)): #24/02/24 Olha
+                     
     # Перевіряємо, чи існує фото з такою самою назвою в базі даних
 
     user_id = user_id.id
@@ -55,7 +57,8 @@ async def create_photo(user_id: int = Depends(auth_service.get_current_user), de
 # Iuliia 18.02.24 Видалення світлини (DELETE):
 @router.delete("/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT, description="Видалення світлини")
 async def delete_photo(photo_id: int, db: Session = Depends(database.get_db),
-                       user: User = Depends(auth_service.get_current_user)):
+                       user: User = Depends(auth_service.get_current_user),
+                       _: RoleAccess = Depends(allowed_operation_remove)): #24/02/24 Olha
 
     # Отримання фотографії з бази даних
     photo = db.query(models.Photo).filter(models.Photo.id == photo_id).first()
@@ -79,7 +82,8 @@ async def delete_photo(photo_id: int, db: Session = Depends(database.get_db),
 @router.put("/photos/{photo_id}", response_model=photo_schema.Photo, 
             status_code=status.HTTP_200_OK, description="Редагування опису світлини")
 def update_photo_handler(photo_id: int, photo_data: photo_schema.PhotoUpdate, db: Session = Depends(database.get_db),
-                 user: User = Depends(auth_service.get_current_user)):
+                 user: User = Depends(auth_service.get_current_user),
+                 _: RoleAccess = Depends(allowed_operation_update)): #24/02/24 Olha
     new_updated_photo = update_photo(db, photo_id, photo_data)     
     return new_updated_photo
 
@@ -87,7 +91,8 @@ def update_photo_handler(photo_id: int, photo_data: photo_schema.PhotoUpdate, db
 # Iuliia 18.02.24 Отримання світлини за унікальним посиланням (GET):
 @router.get("/photos/{photo_id}", status_code=status.HTTP_200_OK, description="Отримання світлини за унікальним посиланням")
 def get_photo(photo_id: int, db: Session = Depends(database.get_db),
-              user: User = Depends(auth_service.get_current_user)):
+              user: User = Depends(auth_service.get_current_user),
+              _: RoleAccess = Depends(allowed_operation_get)): #24/02/24 Olha
     photo = db.query(Photo).filter(Photo.id == photo_id).first()
     if photo is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")

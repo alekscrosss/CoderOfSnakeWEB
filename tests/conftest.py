@@ -4,8 +4,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from main import app
-from models import Base
-from database import get_db
+from src.db.models import Base #25/02/2024 Bag FIX
+from src.db.database import get_db #25/02/2024 Bag FIX
 
 
 
@@ -45,5 +45,11 @@ def client(session):
 
 @pytest.fixture(scope="module")
 def user():
-    return {"username": "palyanitsya", "password": "567234", "email": "palyanitsya@example.com"}
+    return {
+        "username": "test_user",
+        "email": "test_user@gmail.com",
+        "password": "567234",
+        "status_ban": "False",
+        "role": "admin"
+    }
 

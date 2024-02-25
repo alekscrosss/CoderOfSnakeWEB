@@ -5,11 +5,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
 
-
-from datetime import datetime
-
 import enum #18/02/2024 Olha
-import os
+
 
 SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://postgres:567234@localhost/db2"
 Base = declarative_base()
@@ -21,7 +18,8 @@ class Role(enum.Enum): #18/02/2024 Olha
     user: str = 'user'
     admin: str = 'admin'
     moderator: str = 'moderator'    
-    
+
+
 class User(Base): #18/02/2024 Olha
     __tablename__ = "users"
     
@@ -35,6 +33,9 @@ class User(Base): #18/02/2024 Olha
     status_ban = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now()) # дата та час створення
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now()) # дата та час оновлення данних
+
+    photos = relationship("Photo", back_populates="user")
+    comments = relationship("Comment", back_populates="user")
 
 
 # Iuliia 18.02.24
@@ -50,20 +51,9 @@ class Photo(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     # Зв'язок з користувачем
-    user = relationship("User", backref="photos") #18/02/2024 Olha fix create user
-
-
-# Nazar 22.02.24
-class Tag(Base):
-    __tablename__ = 'tags'
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
-
-    image_tag_association = Table('image_tag_association', Base.metadata,
-                                  Column('image_id', Integer, ForeignKey('photos.id')),
-                                  Column('tag_id', Integer, ForeignKey('tags.id')))
-
+    user = relationship("User", back_populates="photos")
+    comments = relationship("Comment", back_populates="photo")
+    tags = relationship("Tag", secondary="photo_tag_association", back_populates="photos")
 
 
 class Comment(Base):
@@ -77,5 +67,22 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     photo_id = Column(Integer, ForeignKey("photos.id"))
 
-    user = relationship("User", backref="comments")
-    photo = relationship("Photo", backref="comments")
+    user = relationship("User", back_populates="comments")
+    photo = relationship("Photo", back_populates="comments")
+
+
+photo_tag_association = Table(
+    'photo_tag_association', Base.metadata,
+    Column('photo_id', Integer, ForeignKey('photos.id'), primary_key=True),
+    Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True)
+)
+
+
+class Tag(Base):
+    __tablename__ = 'tags'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, index=True)
+    photos = relationship("Photo", secondary="photo_tag_association", back_populates="tags")
+
+

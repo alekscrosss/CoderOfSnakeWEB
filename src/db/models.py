@@ -79,4 +79,3 @@ class Comment(Base):
 
     user = relationship("User", backref="comments")
     photo = relationship("Photo", backref="comments")
-

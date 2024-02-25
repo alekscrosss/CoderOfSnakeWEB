@@ -1,8 +1,11 @@
 # routes/photo.py
 import json
+import shutil
 from pathlib import Path
-from fastapi import Request, Path
+from fastapi import Request, Path as PathParam
 import os
+import configparser #25.02.24 Iuliia
+import cloudinary.uploader #25.02.24 Iuliia
 from fastapi import APIRouter, Depends, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from src.crud.photo import get_photo, update_photo
@@ -15,6 +18,27 @@ from src.services.auth import auth_service #23/02/24 Olha
 from src.services.roles import RoleAccess #24/02/24 Olha
 
 router = APIRouter()
+# Вказуємо шлях до файлу конфігурації
+config_file_path = 'conf/config.ini'
+
+# Ініціалізуємо об'єкт конфігурації
+config = configparser.ConfigParser()
+# Зчитуємо дані з файлу конфігурації
+config.read(config_file_path)
+
+# Отримуємо значення з конфігурації
+CLD_NAME = config['cloudinary']['CLD_NAME']
+CLD_API_KEY = config['cloudinary']['CLD_API_KEY']
+CLD_API_SECRET = config['cloudinary']['CLD_API_SECRET']
+
+print(CLD_NAME, CLD_API_KEY, CLD_API_SECRET)
+
+# Тепер використовуйте ці значення для налаштування підключення до Cloudinary
+cloudinary.config(
+    cloud_name=CLD_NAME,
+    api_key=CLD_API_KEY,
+    api_secret=CLD_API_SECRET
+)
 
 #Згідно ТЗ користувачі і юзери можуть робити все зі світлинами
 allowed_operation_get = roles.RoleAccess([Role.admin, Role.moderator, Role.user]) #23/02/24 Olha
@@ -26,33 +50,29 @@ allowed_operation_remove = roles.RoleAccess([Role.admin, Role.moderator, Role.us
 
 
 @router.post("/photos/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з описом")
-async def create_photo(user_id: int = Depends(auth_service.get_current_user), description: str = Form(...), file: UploadFile = File(...), 
+async def create_photo(user_id: int, description: str = Form(...), file: UploadFile = File(...),
                        db: Session = Depends(database.get_db),
                        _: RoleAccess = Depends(allowed_operation_create)): #24/02/24 Olha
                      
     # Перевіряємо, чи існує фото з такою самою назвою в базі даних
 
-    user_id = user_id.id
+     # Завантаження фото в Cloudinary 25.02.24 Iuliia
+    uploaded_image = cloudinary.uploader.upload(file.file,
+                                                folder="Webcore",
+                                                transformation=[
+                                                    {"width": 500, "height": 500, "crop": "fill"},
+                                                    {"effect": "grayscale"},
+                                                    {"quality": "auto"}
+                                                ])
 
-    existing_photo = db.query(Photo).filter(Photo.filename == file.filename).first()
-    if existing_photo:
-        # Якщо фото вже є у базі даних, видаляємо його з файлової системи користувача
-        file_path = Path("uploads") / file.filename
-        if file_path.exists():
-            file_path.unlink()
-        return existing_photo  # Повертаємо існуючу фото з бази даних
-
-    # Якщо фото ще не було завантажено, зберігаємо його в базу даних і на файлову систему
-    file_data = file.file.read()
-    photo = Photo(filename=file.filename, description=description, user_id=user_id)
+    # Зберігання інформації про фото в базі даних
+    photo = Photo(filename=uploaded_image["public_id"], description=description, user_id=user_id)
     db.add(photo)
     db.commit()
     db.refresh(photo)
 
-    with open(f"uploads/{file.filename}", "wb") as f:
-        f.write(file_data)
+    return photo_schema.Photo(**photo.__dict__)
 
-    return photo
 
 # Iuliia 18.02.24 Видалення світлини (DELETE):
 @router.delete("/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT, description="Видалення світлини")

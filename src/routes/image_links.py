@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from src.db.models import SessionLocal, Photo, ImageLink as DBImageLink
+from src.db.models import Photo, ImageLink as DBImageLink
 from src.schemas.image_links import ImageLink as SchemaImageLink, ImageLinkCreate
 from src.crud.image_links import create_image_link
 from src.db.database import get_db
@@ -16,8 +16,12 @@ async def create_image_link_endpoint(photo_id: int, db: Session = Depends(get_db
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    # Генерация URL
-    url = f"http://localhost:8000/photo/{photo_id}"
+    # Проверка наличия публичной ссылки в столбце url
+    if not photo.url:
+        raise HTTPException(status_code=404, detail="Public URL for the photo is not set")
+
+    # Использование публичной ссылки из базы данных для QR-кода
+    public_url = photo.url
 
     # Генерация QR-кода
     qr = qrcode.QRCode(
@@ -26,7 +30,7 @@ async def create_image_link_endpoint(photo_id: int, db: Session = Depends(get_db
         box_size=10,
         border=4,
     )
-    qr.add_data(url)
+    qr.add_data(public_url)
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white")
@@ -36,13 +40,6 @@ async def create_image_link_endpoint(photo_id: int, db: Session = Depends(get_db
 
     # Создание записи в базе данных
     image_link_data = ImageLinkCreate(photo_id=photo_id)
-    new_link = create_image_link(db=db, image_link=image_link_data, url=url, qr_code=qr_code_data)
+    new_link = create_image_link(db=db, image_link=image_link_data, url=public_url, qr_code=qr_code_data)
 
     return new_link
-
-@router.get("/get-link/{photo_id}", response_model=SchemaImageLink)
-async def get_image_link(photo_id: int, db: Session = Depends(get_db)):
-    image_link = db.query(DBImageLink).filter(DBImageLink.photo_id == photo_id).first()
-    if image_link is None:
-        raise HTTPException(status_code=404, detail="Image link not found")
-    return image_link

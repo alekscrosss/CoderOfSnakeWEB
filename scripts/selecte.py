@@ -4,7 +4,7 @@ from psycopg2 import extras
 # Параметри підключення до бази даних PostgreSQL
 dbname = 'db2'
 user = 'postgres'
-password = '123'
+password = '567234'
 host = 'localhost'  # або адреса вашого сервера PostgreSQL
 port = '5432'  # порт за замовчуванням для PostgreSQL
 

@@ -1,4 +1,5 @@
-# file schemas.py
+# file comment_schema.py
+
 from pydantic import BaseModel, EmailStr, Field #18/02/2024 Olha try4
 from typing import Optional
 from datetime import datetime

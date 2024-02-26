@@ -1,3 +1,4 @@
+# file scr\crud\photo.py
 from fastapi import HTTPException
 from pathlib import Path
 import shutil  # Для копіювання файлів

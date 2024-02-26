@@ -54,7 +54,7 @@ class Photo(Base):
     user = relationship("User", back_populates="photos")
     comments = relationship("Comment", back_populates="photo")
     tags = relationship("Tag", secondary="photo_tag_association", back_populates="photos")
-
+    image_links = relationship("ImageLink", back_populates="photo")
 
 class Comment(Base):
     # Модель коментариев..
@@ -86,3 +86,12 @@ class Tag(Base):
     photos = relationship("Photo", secondary="photo_tag_association", back_populates="tags")
 
 
+class ImageLink(Base):
+    __tablename__ = "image_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    photo_id = Column(Integer, ForeignKey('photos.id'), nullable=False)
+    url = Column(String, nullable=False)
+    qr_code = Column(String, nullable=True)  # Путь к файлу QR-кода
+
+    photo = relationship("Photo", back_populates="image_links")

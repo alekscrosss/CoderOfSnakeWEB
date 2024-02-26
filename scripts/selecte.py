@@ -16,7 +16,7 @@ cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
 
 # Виконання SQL-запиту для перегляду вмісту таблиці
 cursor.execute('SELECT * FROM users')
-# cursor.execute('SELECT * FROM photos')
+cursor.execute('SELECT * FROM photos')
 # cursor.execute('SELECT * FROM users WHERE FALSE')
 # cursor.execute('SELECT * FROM photos WHERE FALSE')
 

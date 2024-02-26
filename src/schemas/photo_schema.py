@@ -1,16 +1,14 @@
-from pydantic import BaseModel, EmailStr, Field #18/02/2024 Olha try4
+from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
 
-# Iuliia 18.02.24 -  Photo
 class PhotoBase(BaseModel):
     filename: str
-    description: str
-
 
 class PhotoCreate(PhotoBase):
-    pass
-
+    description: str
+    size_id: int
+    size: str = Field(None, alias="size_name")  # Поле для розміру
+    effect: str = Field(None, alias="effect_name")  # Поле для ефекту
 
 class PhotoUpdate(BaseModel):
     description: Optional[str] = None
@@ -18,7 +16,8 @@ class PhotoUpdate(BaseModel):
 
 class Photo(PhotoBase):
     id: int
-
+    description: str
+    user_id: int
 
     class Config:
         orm_mode = True

@@ -8,6 +8,7 @@ from sqlalchemy import text
 from starlette.responses import HTMLResponse
 from src.db.database import get_db
 from fastapi.templating import Jinja2Templates
+from src.routes import photo_cloud
 
 from src.routes import auth, photo, comments, tags
 
@@ -47,4 +48,3 @@ app.include_router(photo.router, prefix='/api')
 app.include_router(auth.router, prefix='/api') 
 app.include_router(comments.router, prefix='/api')
 app.include_router(tags.router, prefix='/api')
-

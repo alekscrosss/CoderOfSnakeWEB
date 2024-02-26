@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 import enum #18/02/2024 Olha
 
 
-SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://postgres:567234@localhost/db2"
+SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://postgres:123@localhost/db2"
 Base = declarative_base()
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -40,20 +40,41 @@ class User(Base): #18/02/2024 Olha
 
 # Iuliia 18.02.24
 class Photo(Base):
-    # Модель для зберігання фотографій користувачів
-
     __tablename__ = "photos"
 
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, index=True)
-    description = Column(String, nullable=True)
-    created_at = Column(DateTime, default=func.now())
-    user_id = Column(Integer, ForeignKey("users.id"))
+    description = Column(String, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    size_id = Column(Integer, ForeignKey("sizes.id"), index=True, nullable=True)
+    effect_id = Column(Integer, ForeignKey("effects.id"), index=True, nullable=True)
+    url = Column(String, index=True)
 
-    # Зв'язок з користувачем
     user = relationship("User", back_populates="photos")
     comments = relationship("Comment", back_populates="photo")
     tags = relationship("Tag", secondary="photo_tag_association", back_populates="photos")
+    size = relationship("Size")  # Додайте зв'язок з моделлю Size
+    effect = relationship("Effect")  # Додайте зв'язок з моделлю Effect
+
+class Size(Base):
+    __tablename__ = "sizes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    width = Column(Integer)
+    height = Column(Integer)
+
+    photos = relationship("Photo", back_populates="size")
+
+
+class Effect(Base):
+    __tablename__ = "effects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    description = Column(String)  # Додали поле опису
+
+    photos = relationship("Photo", back_populates="effect")
 
 
 class Comment(Base):

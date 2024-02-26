@@ -46,15 +46,40 @@ class Photo(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, index=True)
-    description = Column(String, nullable=True)
-    created_at = Column(DateTime, default=func.now())
-    user_id = Column(Integer, ForeignKey("users.id"))
+    description = Column(String, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    size_id = Column(Integer, ForeignKey("sizes.id"), index=True, nullable=True)
+    effect_id = Column(Integer, ForeignKey("effects.id"), index=True, nullable=True)
+    url = Column(String, index=True)
 
     # Зв'язок з користувачем
     user = relationship("User", back_populates="photos")
     comments = relationship("Comment", back_populates="photo")
     tags = relationship("Tag", secondary="photo_tag_association", back_populates="photos")
     image_links = relationship("ImageLink", back_populates="photo")
+    size = relationship("Size")  # Додайте зв'язок з моделлю Size
+    effect = relationship("Effect")  # Додайте зв'язок з моделлю Effect
+
+class Size(Base):
+    __tablename__ = "sizes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    width = Column(Integer)
+    height = Column(Integer)
+
+    photos = relationship("Photo", back_populates="size")
+
+
+class Effect(Base):
+    __tablename__ = "effects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    description = Column(String)  # Додали поле опису
+
+    photos = relationship("Photo", back_populates="effect")
+
 
 class Comment(Base):
     # Модель коментариев..

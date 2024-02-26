@@ -1,22 +1,19 @@
 # routes/photo.py
-import json
-import shutil
-from pathlib import Path
-from fastapi import Request, Path as PathParam
 import os
 import configparser #25.02.24 Iuliia
 import cloudinary.uploader #25.02.24 Iuliia
 from fastapi import APIRouter, Depends, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
-from src.crud.photo import get_photo, update_photo
+from src.crud.photo import get_photo, update_photo, create_photo
 from src.db import models, database
+from src.db.database import get_db
 from src.schemas import photo_schema
-from src.db.models import Photo, Role, User #23/02/24 Olha
+from src.db.models import Photo, Role, User, Size, Effect  # 23/02/24 Olha
 from fastapi import HTTPException
 from src.services import roles #23/02/24 Olha
 from src.services.auth import auth_service #23/02/24 Olha
 from src.services.roles import RoleAccess #24/02/24 Olha
-
+from src.schemas.photo_schema import PhotoCreate
 router = APIRouter()
 # Вказуємо шлях до файлу конфігурації
 config_file_path = 'conf/config.ini'
@@ -49,29 +46,154 @@ allowed_operation_remove = roles.RoleAccess([Role.admin, Role.moderator, Role.us
 # Iuliia 18.02.24 Завантаження світлини з описом (POST):
 
 
-@router.post("/photos/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з описом")
-async def create_photo(user_id: int, description: str = Form(...), file: UploadFile = File(...),
-                       db: Session = Depends(database.get_db),
-                       _: RoleAccess = Depends(allowed_operation_create)): #24/02/24 Olha
-                     
-    # Перевіряємо, чи існує фото з такою самою назвою в базі даних
+from fastapi import Query
 
-     # Завантаження фото в Cloudinary 25.02.24 Iuliia
-    uploaded_image = cloudinary.uploader.upload(file.file,
-                                                folder="Webcore",
-                                                transformation=[
-                                                    {"width": 500, "height": 500, "crop": "fill"},
-                                                    {"effect": "grayscale"},
-                                                    {"quality": "auto"}
-                                                ])
+@router.post("/photos/grayscale/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з чорно-білим ефектом ")
+async def create_photo_grayscale(user_id: int,
+                       description: str = Form(...),
+                       size_name: str = Form(...),
+                       effect_name: str = Form(...),
+                       file: UploadFile = File(...),
+                       db: Session = Depends(database.get_db)):
+    # Отримання ID розміру за його назвою
+    size = db.query(Size).filter(Size.name == size_name).first()
+    if not size:
+        raise HTTPException(status_code=404, detail="Size not found")
 
-    # Зберігання інформації про фото в базі даних
-    photo = Photo(filename=uploaded_image["public_id"], description=description, user_id=user_id)
+    # Отримання ID ефекту за його назвою
+    effect = db.query(Effect).filter(Effect.name == effect_name).first()
+    if not effect:
+        raise HTTPException(status_code=404, detail="Effect not found")
+
+    # Формування трансформаційного рядка для Cloudinary
+    # Початкові параметри трансформації у вигляді словника
+    transformation = [
+                    {"width": 500, "height": 500, "crop": "fill"},
+                    {"effect": "grayscale"},
+                    {"quality": "auto"}
+                ]
+
+    # Завантаження фото з необхідними трансформаціями на Cloudinary
+    uploaded_image = cloudinary.uploader.upload(
+        file.file,
+        folder="Webcore",
+        transformation=transformation
+    )
+
+    # Збереження фото в базі даних з отриманими ID розміру та ефекту
+    photo = Photo(
+        filename=uploaded_image["public_id"],
+        description=description,
+        user_id=user_id,
+        size_id=size.id,
+        effect_id=effect.id,
+        url=uploaded_image["url"]
+    )
     db.add(photo)
     db.commit()
     db.refresh(photo)
 
     return photo_schema.Photo(**photo.__dict__)
+
+# Функція для завантаження фото з ефектом старіння
+@router.post("/photos/aging/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з ефектом старіння")
+async def upload_photo_with_aging_effect(user_id: int,
+                       description: str = Form(...),
+                       size_name: str = Form(...),
+                       effect_name: str = Form(...),
+                       file: UploadFile = File(...),
+                       db: Session = Depends(database.get_db)):
+
+    # Отримання ID розміру за його назвою
+    size = db.query(Size).filter(Size.name == size_name).first()
+    if not size:
+        raise HTTPException(status_code=404, detail="Size not found")
+
+
+    # Отримання ID ефекту за його назвою
+    effect = db.query(Effect).filter(Effect.name == effect_name).first()
+    if not effect:
+        raise HTTPException(status_code=404, detail="Effect not found")
+
+    # Формування трансформаційного рядка для Cloudinary
+    # Початкові параметри трансформації у вигляді словника
+    transformation = [
+                    {"width": 500, "height": 500, "crop": "fill"},
+                    {"effect": "sepia"},
+                    {"quality": "auto"}
+                ]
+
+    # Завантаження фото з необхідними трансформаціями на Cloudinary
+    uploaded_image = cloudinary.uploader.upload(
+        file.file,
+        folder="Webcore",
+        transformation=transformation
+    )
+
+    # Збереження фото в базі даних з отриманими ID розміру та ефекту
+    photo = Photo(
+        filename=uploaded_image["public_id"],
+        description=description,
+        user_id=user_id,
+        effect_id=effect.id,
+        url=uploaded_image["url"]
+    )
+    db.add(photo)
+    db.commit()
+    db.refresh(photo)
+
+    return photo_schema.Photo(**photo.__dict__)
+
+
+# Функція для завантаження фото з розмиттям
+@router.post("/photos/blur/", status_code=status.HTTP_201_CREATED, description="Завантаження світлини з розмиттям")
+async def upload_photo_with_blur_effect(user_id: int,
+                       description: str = Form(...),
+                       size_name: str = Form(...),
+                       effect_name: str = Form(...),
+                       file: UploadFile = File(...),
+                       db: Session = Depends(database.get_db)):
+
+    # Отримання ID розміру за його назвою
+    size = db.query(Size).filter(Size.name == size_name).first()
+    if not size:
+        raise HTTPException(status_code=404, detail="Size not found")
+
+
+    # Отримання ID ефекту за його назвою
+    effect = db.query(Effect).filter(Effect.name == effect_name).first()
+    if not effect:
+        raise HTTPException(status_code=404, detail="Effect not found")
+
+    # Формування трансформаційного рядка для Cloudinary
+    # Початкові параметри трансформації у вигляді словника
+    transformation = [
+                    {"width": 500, "height": 500, "crop": "fill"},
+                    {"effect": "blur:300"},
+                    {"quality": "auto"}
+                ]
+
+    # Завантаження фото з необхідними трансформаціями на Cloudinary
+    uploaded_image = cloudinary.uploader.upload(
+        file.file,
+        folder="Webcore",
+        transformation=transformation
+    )
+
+    # Збереження фото в базі даних з отриманими ID розміру та ефекту
+    photo = Photo(
+        filename=uploaded_image["public_id"],
+        description=description,
+        user_id=user_id,
+        effect_id=effect.id,
+        url=uploaded_image["url"]
+    )
+    db.add(photo)
+    db.commit()
+    db.refresh(photo)
+
+    return photo_schema.Photo(**photo.__dict__)
+
 
 
 # Iuliia 18.02.24 Видалення світлини (DELETE):

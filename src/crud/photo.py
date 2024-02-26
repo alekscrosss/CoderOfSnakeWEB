@@ -1,6 +1,8 @@
-# file scr\crud\photo.py
+# crud/photo.py
 from fastapi import HTTPException
+from fastapi import APIRouter, Depends, status, File, UploadFile, Form
 from pathlib import Path
+from src.db import database
 import shutil  # Для копіювання файлів
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -15,22 +17,40 @@ from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 UPLOAD_FOLDER = "uploads"  # Папка для збереження завантажених файлів
 
-def create_photo(db: Session, user_id: int, file: UploadFile, description: str):
-    # Створюємо папку для збереження файлів, якщо її ще немає
-    upload_folder_path = Path(UPLOAD_FOLDER)
-    upload_folder_path.mkdir(parents=True, exist_ok=True)
+# crud/photo.py
 
-    # Зберігаємо файл на файловій системі
-    file_path = upload_folder_path / file.filename
-    with open(file_path, "wb") as file_object:
-        shutil.copyfileobj(file.file, file_object)  # Копіюємо дані з потоку файлу у файл
+import cloudinary.uploader
+from sqlalchemy.orm import Session
+from src.schemas.photo_schema import PhotoCreate
+from fastapi import UploadFile
 
-    # Створюємо запис про фотографію в базі даних, зберігаючи шлях до файлу
-    photo = Photo(filename=file.filename, description=description, user_id=user_id)
-    db.add(photo)
-    db.commit()
-    db.refresh(photo)
-    return photo
+# crud/photo.py
+import cloudinary.uploader
+
+# crud/photo.py
+import cloudinary.uploader
+
+def create_photo(user_id: int, description: str, size: str, effect: str, file: UploadFile = File(...), db: Session = Depends(database.get_db)):
+    try:
+        # Завантаження фотографії у Cloudinary
+        uploaded_image = cloudinary.uploader.upload(file.file, folder="Webcore")
+
+        # Збереження фотографії у базі даних
+        db_photo = Photo(
+            filename=uploaded_image["public_id"],
+            description=description,
+            size=size,
+            effect=effect,
+            user_id=user_id
+        )
+        db.add(db_photo)
+        db.commit()
+        db.refresh(db_photo)
+        return db_photo
+    except Exception as e:
+        return {"error": str(e)}
+
+
 
 
 # Iuliia 18.02.24

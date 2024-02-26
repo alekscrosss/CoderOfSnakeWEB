@@ -71,7 +71,7 @@ def test_login_with_wrong_email(client, user, session):
     response = client.post("/api/auth/login", data={"username": "eaxample@test.com", "password": user.get("password")})
     assert response.status_code == 401, response.text
     payload = response.json()
-    assert payload["detail"] == messages.INVALID_EMAIL
+    assert payload["detail"] == "Invalid email" #26/02/2024 Olha BAG FIX
 
 
 

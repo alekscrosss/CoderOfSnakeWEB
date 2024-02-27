@@ -14,6 +14,9 @@ from src.services import roles #23/02/24 Olha
 from src.services.auth import auth_service #23/02/24 Olha
 from src.services.roles import RoleAccess #24/02/24 Olha
 from src.schemas.photo_schema import PhotoCreate
+from dotenv import load_dotenv
+load_dotenv()
+
 router = APIRouter()
 # Вказуємо шлях до файлу конфігурації
 config_file_path = 'conf/config.ini'
@@ -24,9 +27,9 @@ config = configparser.ConfigParser()
 config.read(config_file_path)
 
 # Отримуємо значення з конфігурації
-CLD_NAME = config['cloudinary']['CLD_NAME']
-CLD_API_KEY = config['cloudinary']['CLD_API_KEY']
-CLD_API_SECRET = config['cloudinary']['CLD_API_SECRET']
+CLD_NAME = os.environ.get('CLD_NAME')
+CLD_API_KEY = os.environ.get('CLD_API_KEY')
+CLD_API_SECRET = os.environ.get('CLD_API_SECRET')
 
 print(CLD_NAME, CLD_API_KEY, CLD_API_SECRET)
 

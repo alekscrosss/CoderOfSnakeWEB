@@ -15,7 +15,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 
-sqlalchemy_url = "postgresql+psycopg2://postgres:567234@localhost:5432/db2"
+sqlalchemy_url = os.environ.get('SQLALCHEMY_DATABASE_URL')
 
 # URI: postgresql://username:password@domain:port/database
 

@@ -1,7 +1,7 @@
 import pickle #cash
 from datetime import datetime, timedelta
 from typing import Optional
-
+import os
 import redis #cash
 from fastapi import Depends, HTTPException, status
 from passlib.context import CryptContext
@@ -11,16 +11,17 @@ from jose import JWTError, jwt
 
 from src.db.database import get_db
 from src.crud import users as repository_users
-
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class Auth:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    SECRET_KEY = "45t5g4564rggnmj"
-    ALGORITHM = "HS256"
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    ALGORITHM = os.environ.get('ALGORITHM')
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-    r = redis.Redis(host='localhost', port='6379', db=0) #cash
+    r = redis.Redis(host=os.environ.get('REDIS_HOST'), port=os.environ.get('REDIS'), db=0) #cash
 
     def verify_password(self, plain_password, hashed_password):
         return self.pwd_context.verify(plain_password, hashed_password)

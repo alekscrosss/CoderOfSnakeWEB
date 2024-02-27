@@ -1,18 +1,19 @@
 from pathlib import Path
-
+import os
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from fastapi_mail.errors import ConnectionErrors
 from pydantic import EmailStr
 
 from src.services.auth import auth_service
-
+from dotenv import load_dotenv
+load_dotenv()
 
 conf = ConnectionConfig(
-    MAIL_USERNAME='beverlymarsh@meta.ua',
-    MAIL_PASSWORD='5672345',
-    MAIL_FROM='beverlymarsh@meta.ua',
-    MAIL_PORT='465',
-    MAIL_SERVER='smtp.meta.ua',
+    MAIL_USERNAME=os.environ.get('MAIL_USERNAME'),
+    MAIL_PASSWORD=os.environ.get('MAIL_PASSWORD'),
+    MAIL_FROM=os.environ.get('MAIL_FROM'),
+    MAIL_PORT=os.environ.get('MAIL_PORT'),
+    MAIL_SERVER=os.environ.get('MAIL_SERVER'),
     MAIL_FROM_NAME="Contacts app",
     MAIL_STARTTLS=False,
     MAIL_SSL_TLS=True,

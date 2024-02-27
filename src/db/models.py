@@ -1,14 +1,16 @@
 # file models.py
-
+import os
 from sqlalchemy import Column, Integer, String, create_engine, ForeignKey, Table, DateTime, Boolean, Enum, func #18/02/2024 Olha
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
 
 import enum #18/02/2024 Olha
+from dotenv import load_dotenv
+load_dotenv()
 
 
-SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://postgres:567234@localhost/db2"
+SQLALCHEMY_DATABASE_URL = os.environ.get('SQLALCHEMY_DATABASE_URL')
 Base = declarative_base()
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -1,12 +1,15 @@
 import psycopg2
 from psycopg2 import extras
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Параметри підключення до бази даних PostgreSQL
-dbname = 'db2'
-user = 'postgres'
-password = '567234'
-host = 'localhost'  # або адреса вашого сервера PostgreSQL
-port = '5432'  # порт за замовчуванням для PostgreSQL
+dbname = os.environ.get('POSTGRES_DB')
+user = os.environ.get('POSTGRES_USER')
+password = os.environ.get('POSTGRES_PASSWORD')
+host = "localhost"  # або адреса вашого сервера PostgreSQL
+port = os.environ.get('POSTGRES_PORT')  # порт за замовчуванням для PostgreSQL
 
 # Встановлення з'єднання з базою даних
 conn = psycopg2.connect(dbname=dbname, user=user, password=password, host=host, port=port)

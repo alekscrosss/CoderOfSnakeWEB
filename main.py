@@ -9,7 +9,7 @@ from starlette.responses import HTMLResponse
 from src.db.database import get_db
 from src.db.models import ImageLink
 from fastapi.templating import Jinja2Templates
-from src.routes import photo_cloud
+
 
 from src.routes import auth, photo, comments, tags, image_links
 

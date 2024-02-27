@@ -43,3 +43,4 @@ async def create_image_link_endpoint(photo_id: int, db: Session = Depends(get_db
     new_link = create_image_link(db=db, image_link=image_link_data, url=public_url, qr_code=qr_code_data)
 
     return new_link
+

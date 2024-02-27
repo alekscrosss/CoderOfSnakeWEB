@@ -53,8 +53,8 @@ async def show_qr_code(photo_id: int, request: Request, db: Session = Depends(ge
     return templates.TemplateResponse("qr_code_page.html", {"request": request, "qr_code_data": qr_code_data})
 
 
-app.include_router(photo.router, prefix='/api')
-app.include_router(auth.router, prefix='/api') 
-app.include_router(comments.router, prefix='/api')
-app.include_router(tags.router, prefix='/api')
-app.include_router(image_links.router, prefix='/api')
+app.include_router(photo.router, prefix='/api', tags=['photo'])
+app.include_router(auth.router, prefix='/api')
+app.include_router(comments.router, prefix='/api', tags=['comments'])
+app.include_router(tags.router, prefix='/api', tags=['tags'])
+app.include_router(image_links.router, prefix='/api', tags=['QR-code'])

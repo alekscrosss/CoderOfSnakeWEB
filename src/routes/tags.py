@@ -22,6 +22,17 @@ def add_tags_to_photo(
     db: Session = Depends(get_db),
     _: RoleAccess = Depends(allowed_operation_create) #27/02/24 Olha
 ):
+    
+    """
+    The add_tags_to_photo function adds tags to a photo.
+    
+    :param photo_id: int: Specify the photo to which we want to add tags
+    :param tag_data: tags_shemas.PhotoTagsUpdate: Pass the tags to be added to a photo
+    :param db: Session: Pass the database session to the function
+    :param _: RoleAccess: Check if the user has access to this function
+    :return: A list of tags that were added to the photo
+    :doc-author: Trelent
+    """
     if len(tag_data.tags) > 5:
         raise HTTPException(status_code=400, detail="Cannot add more than 5 tags to a photo.")
     return tags.associate_tags_with_photo(db, photo_id, tag_data.tags)

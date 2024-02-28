@@ -58,7 +58,20 @@ async def create_photo_grayscale(user_id: int,
                        effect_name: str = Form(...),
                        file: UploadFile = File(...),
                        db: Session = Depends(database.get_db)):
+    
     # Отримання ID розміру за його назвою
+    """
+    The create_photo_grayscale function creates a new photo in the database.
+    
+    :param user_id: int: Identify the user who uploaded the photo
+    :param description: str: Get the description of the photo
+    :param size_name: str: Get the size id from its name
+    :param effect_name: str: Get the id of the effect by its name
+    :param file: UploadFile: Receive the file from the client
+    :param db: Session: Get the database session
+    :return: A photo object
+    :doc-author: Trelent
+    """
     size = db.query(Size).filter(Size.name == size_name).first()
     if not size:
         raise HTTPException(status_code=404, detail="Size not found")
@@ -106,8 +119,23 @@ async def upload_photo_with_aging_effect(user_id: int,
                        effect_name: str = Form(...),
                        file: UploadFile = File(...),
                        db: Session = Depends(database.get_db)):
+    
 
     # Отримання ID розміру за його назвою
+    """
+    The upload_photo_with_aging_effect function uploads a photo to the Cloudinary cloud storage service,
+        applies an aging effect to it and saves it in the database.
+    
+    
+    :param user_id: int: Identify the user who uploaded the photo
+    :param description: str: Set the description of the photo
+    :param size_name: str: Get the size id from its name
+    :param effect_name: str: Get the id of the effect by its name
+    :param file: UploadFile: Upload the file to cloudinary
+    :param db: Session: Get access to the database
+    :return: A photo_schema
+    :doc-author: Trelent
+    """
     size = db.query(Size).filter(Size.name == size_name).first()
     if not size:
         raise HTTPException(status_code=404, detail="Size not found")
@@ -156,8 +184,22 @@ async def upload_photo_with_blur_effect(user_id: int,
                        effect_name: str = Form(...),
                        file: UploadFile = File(...),
                        db: Session = Depends(database.get_db)):
+    
 
     # Отримання ID розміру за його назвою
+    """
+    The upload_photo_with_blur_effect function uploads a photo to Cloudinary,
+        applies the blur effect and saves it in the database.
+    
+    :param user_id: int: Identify the user who uploaded the photo
+    :param description: str: Set the description of the photo
+    :param size_name: str: Get the size id from the database
+    :param effect_name: str: Get the id of the effect from its name
+    :param file: UploadFile: Get the file from the request
+    :param db: Session: Access the database
+    :return: A photo_schema
+    :doc-author: Trelent
+    """
     size = db.query(Size).filter(Size.name == size_name).first()
     if not size:
         raise HTTPException(status_code=404, detail="Size not found")
@@ -204,8 +246,19 @@ async def upload_photo_with_blur_effect(user_id: int,
 async def delete_photo(photo_id: int, db: Session = Depends(database.get_db),
                        user: User = Depends(auth_service.get_current_user),
                        _: RoleAccess = Depends(allowed_operation_remove)): #24/02/24 Olha
+    
 
     # Отримання фотографії з бази даних
+    """
+    The delete_photo function deletes a photo from the database and file system.
+    
+    :param photo_id: int: Specify the id of the photo to be deleted
+    :param db: Session: Get access to the database
+    :param user: User: Get the current user
+    :param _: RoleAccess: Check if the user has access to this operation
+    :return: Http status code 204, which means that the request was successful
+    :doc-author: Trelent
+    """
     photo = db.query(models.Photo).filter(models.Photo.id == photo_id).first()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
@@ -229,6 +282,24 @@ async def delete_photo(photo_id: int, db: Session = Depends(database.get_db),
 def update_photo_handler(photo_id: int, photo_data: photo_schema.PhotoUpdate, db: Session = Depends(database.get_db),
                  user: User = Depends(auth_service.get_current_user),
                  _: RoleAccess = Depends(allowed_operation_update)): #24/02/24 Olha
+    
+    """
+    The update_photo_handler function updates a photo in the database.
+        The function takes as input:
+            - photo_id: int, the id of the photo to be updated;
+            - photo_data: PhotoUpdate, an object containing all fields that can be updated for a given user; 
+                this is defined in schemas/photo.py and contains only non-nullable fields (i.e., no default values); 
+                if any field is not provided by the user it will not be changed in the database;
+            - db: Session = Depends(database.get_db),
+    
+    :param photo_id: int: Specify the photo id that will be updated
+    :param photo_data: photo_schema.PhotoUpdate: Get the data from the request body
+    :param db: Session: Get a database session
+    :param user: User: Get the current user
+    :param _: RoleAccess: Check if the user has permission to update a photo
+    :return: A photo object
+    :doc-author: Trelent
+    """
     new_updated_photo = update_photo(db, photo_id, photo_data)     
     return new_updated_photo
 
@@ -238,6 +309,19 @@ def update_photo_handler(photo_id: int, photo_data: photo_schema.PhotoUpdate, db
 def get_photo(photo_id: int, db: Session = Depends(database.get_db),
               user: User = Depends(auth_service.get_current_user),
               _: RoleAccess = Depends(allowed_operation_get)): #24/02/24 Olha
+    
+    """
+    The get_photo function returns a photo object with the given id.
+        If no photo is found, it raises an HTTP 404 error.
+    
+    
+    :param photo_id: int: Specify the id of the photo to be retrieved
+    :param db: Session: Pass the database session to the function
+    :param user: User: Get the current user
+    :param _: RoleAccess: Check if the user has access to this operation
+    :return: The photo object from the database
+    :doc-author: Trelent
+    """
     photo = db.query(Photo).filter(Photo.id == photo_id).first()
     if photo is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")

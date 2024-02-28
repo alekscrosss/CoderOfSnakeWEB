@@ -12,6 +12,17 @@ router = APIRouter()
 
 @router.post("/create-link/{photo_id}", response_model=SchemaImageLink)
 async def create_image_link_endpoint(photo_id: int, db: Session = Depends(get_db)):
+    
+    """
+    The create_image_link_endpoint function creates a new image link in the database.
+        It takes an integer photo_id as input and returns a JSON object containing the newly created image link's data.
+    
+    
+    :param photo_id: int: Get the photo from the database
+    :param db: Session: Access the database
+    :return: The following:
+    :doc-author: Trelent
+    """
     photo = db.query(Photo).filter(Photo.id == photo_id).first()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")

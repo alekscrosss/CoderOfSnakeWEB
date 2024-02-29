@@ -245,25 +245,28 @@ async def upload_photo_with_blur_effect(user_id: int,
 @router.delete("/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT, description="Видалення світлини")
 async def delete_photo(photo_id: int, db: Session = Depends(database.get_db),
                        user: User = Depends(auth_service.get_current_user),
-                       _: RoleAccess = Depends(allowed_operation_remove)): #24/02/24 Olha
-    
+                       _: RoleAccess = Depends(allowed_operation_remove)):
+    """
+    Функція видаляє фотографію з бази даних і файлової системи.
 
+    :param photo_id: int: ID фотографії, яку потрібно видалити
+    :param db: Session: Доступ до бази даних
+    :param user: User: Поточний користувач
+    :param _: RoleAccess: Перевірка доступу користувача до цієї операції
+    :return: HTTP статус код 204, що означає успішне виконання запиту
+    """
     # Отримання фотографії з бази даних
-    """
-    The delete_photo function deletes a photo from the database and file system.
-    
-    :param photo_id: int: Specify the id of the photo to be deleted
-    :param db: Session: Get access to the database
-    :param user: User: Get the current user
-    :param _: RoleAccess: Check if the user has access to this operation
-    :return: Http status code 204, which means that the request was successful
-    :doc-author: Trelent
-    """
     photo = db.query(models.Photo).filter(models.Photo.id == photo_id).first()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-     # Видалення файлу з файлової системи
+    # Видалення пов'язаних записів у таблиці image_links
+    image_links = db.query(models.ImageLink).filter(models.ImageLink.photo_id == photo_id).all()
+    for link in image_links:
+        db.delete(link)
+    db.commit()
+
+    # Видалення файлу з файлової системи
     file_path = os.path.join("uploads", photo.filename)
     if os.path.exists(file_path):
         os.remove(file_path)
